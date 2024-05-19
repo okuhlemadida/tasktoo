@@ -4,9 +4,22 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ReadXMLFile {
     public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Please specify the fields to output.");
+            System.out.println("Usage: java ReadXMLFile <field1> <field2> ...");
+            System.out.println("Available fields: name, postalZip, region, country, address, list");
+            return;
+        }
+
+        // Convert arguments to a set for easy lookup
+        Set<String> fieldsToPrint = new HashSet<>(Arrays.asList(args));
+
         try {
             // File path to the XML file
             File xmlFile = new File("records.xml");
@@ -28,32 +41,41 @@ public class ReadXMLFile {
             for (int i = 0; i < recordList.getLength(); i++) {
                 Element recordElement = (Element) recordList.item(i);
                 
-                // Get and print <name> element
-                String name = recordElement.getElementsByTagName("name").item(0).getTextContent();
-                System.out.println("Name: " + name);
+                // Conditionally print fields based on user input
+                if (fieldsToPrint.contains("name")) {
+                    String name = recordElement.getElementsByTagName("name").item(0).getTextContent();
+                    System.out.println("Name: " + name);
+                }
                 
-                // Get and print <postalZip> element
-                String postalZip = recordElement.getElementsByTagName("postalZip").item(0).getTextContent();
-                System.out.println("Postal Zip: " + postalZip);
+                if (fieldsToPrint.contains("postalZip")) {
+                    String postalZip = recordElement.getElementsByTagName("postalZip").item(0).getTextContent();
+                    System.out.println("Postal Zip: " + postalZip);
+                }
                 
-                // Get and print <region> element
-                String region = recordElement.getElementsByTagName("region").item(0).getTextContent();
-                System.out.println("Region: " + region);
+                if (fieldsToPrint.contains("region")) {
+                    String region = recordElement.getElementsByTagName("region").item(0).getTextContent();
+                    System.out.println("Region: " + region);
+                }
                 
-                // Get and print <country> element
-                String country = recordElement.getElementsByTagName("country").item(0).getTextContent();
-                System.out.println("Country: " + country);
+                if (fieldsToPrint.contains("country")) {
+                    String country = recordElement.getElementsByTagName("country").item(0).getTextContent();
+                    System.out.println("Country: " + country);
+                }
                 
-                // Get and print <address> element
-                String address = recordElement.getElementsByTagName("address").item(0).getTextContent();
-                System.out.println("Address: " + address);
+                if (fieldsToPrint.contains("address")) {
+                    String address = recordElement.getElementsByTagName("address").item(0).getTextContent();
+                    System.out.println("Address: " + address);
+                }
                 
-                // Get and print <list> element
-                String list = recordElement.getElementsByTagName("list").item(0).getTextContent();
-                System.out.println("List: " + list);
-                
-                // Print a blank line for better readability
-                System.out.println();
+                if (fieldsToPrint.contains("list")) {
+                    String list = recordElement.getElementsByTagName("list").item(0).getTextContent();
+                    System.out.println("List: " + list);
+                }
+
+                // Print a blank line for better readability if any field is printed
+                if (fieldsToPrint.stream().anyMatch(field -> recordElement.getElementsByTagName(field).getLength() > 0)) {
+                    System.out.println();
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
