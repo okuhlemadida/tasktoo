@@ -3,6 +3,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Element;
+import org.json.JSONObject;
+import org.json.JSONArray;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -37,46 +39,53 @@ public class ReadXMLFile {
             // Get all <record> elements
             NodeList recordList = doc.getElementsByTagName("record");
             
+            // Create a JSON array to hold all records
+            JSONArray jsonArray = new JSONArray();
+            
             // Iterate over each <record> element
             for (int i = 0; i < recordList.getLength(); i++) {
                 Element recordElement = (Element) recordList.item(i);
                 
-                // Conditionally print fields based on user input
+                // Create a JSON object for each record
+                JSONObject jsonObject = new JSONObject();
+                
+                // Conditionally add fields based on user input
                 if (fieldsToPrint.contains("name")) {
                     String name = recordElement.getElementsByTagName("name").item(0).getTextContent();
-                    System.out.println("Name: " + name);
+                    jsonObject.put("name", name);
                 }
                 
                 if (fieldsToPrint.contains("postalZip")) {
                     String postalZip = recordElement.getElementsByTagName("postalZip").item(0).getTextContent();
-                    System.out.println("Postal Zip: " + postalZip);
+                    jsonObject.put("postalZip", postalZip);
                 }
                 
                 if (fieldsToPrint.contains("region")) {
                     String region = recordElement.getElementsByTagName("region").item(0).getTextContent();
-                    System.out.println("Region: " + region);
+                    jsonObject.put("region", region);
                 }
                 
                 if (fieldsToPrint.contains("country")) {
                     String country = recordElement.getElementsByTagName("country").item(0).getTextContent();
-                    System.out.println("Country: " + country);
+                    jsonObject.put("country", country);
                 }
                 
                 if (fieldsToPrint.contains("address")) {
                     String address = recordElement.getElementsByTagName("address").item(0).getTextContent();
-                    System.out.println("Address: " + address);
+                    jsonObject.put("address", address);
                 }
                 
                 if (fieldsToPrint.contains("list")) {
                     String list = recordElement.getElementsByTagName("list").item(0).getTextContent();
-                    System.out.println("List: " + list);
+                    jsonObject.put("list", list);
                 }
 
-                // Print a blank line for better readability if any field is printed
-                if (fieldsToPrint.stream().anyMatch(field -> recordElement.getElementsByTagName(field).getLength() > 0)) {
-                    System.out.println();
-                }
+                // Add the JSON object to the JSON array
+                jsonArray.put(jsonObject);
             }
+            
+            // Print the JSON array
+            System.out.println(jsonArray.toString(4)); // Pretty print with an indentation of 4 spaces
         } catch (Exception e) {
             e.printStackTrace();
         }
