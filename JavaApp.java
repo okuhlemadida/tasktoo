@@ -1,10 +1,11 @@
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Element;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
+import org.xml.sax.XMLReader;
 import org.json.JSONObject;
 import org.json.JSONArray;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -36,52 +37,69 @@ public class ReadXMLFile {
         }
 
         try {
-            // File path to the XML file
-            File xmlFile = new File("records.xml");
-            
-            // Create a DocumentBuilderFactory
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            
-            // Create a DocumentBuilder
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            
-            // Parse the XML file and get the Document object
-            Document doc = dBuilder.parse(xmlFile);
-            doc.getDocumentElement().normalize();
-            
-            // Get all <record> elements
-            NodeList recordList = doc.getElementsByTagName("record");
-            
-            // Create a JSON array to hold all records
-            JSONArray jsonArray = new JSONArray();
-            
-            // Iterate over each <record> element
-            for (int i = 0; i < recordList.getLength(); i++) {
-                Element recordElement = (Element) recordList.item(i);
-                
-                // Create a JSON object for each record
-                JSONObject jsonObject = new JSONObject();
-                
-                // Conditionally add fields based on user input
-                for (String field : fieldsToPrint) {
-                    NodeList nodeList = recordElement.getElementsByTagName(field);
-                    if (nodeList.getLength() > 0) {
-                        String value = nodeList.item(0).getTextContent();
-                        jsonObject.put(field, value);
-                    } else {
-                        // Provide a meaningful message for missing elements
-                        jsonObject.put(field, "Field not found in XML");
-                    }
-                }
+            // Create a SAX parser instance
+            XMLReader xmlReader = XMLReaderFactory.createXMLReader();
 
-                // Add the JSON object to the JSON array
-                jsonArray.put(jsonObject);
-            }
-            
-            // Print the JSON array
+            // Set the custom handler
+            UserHandler userHandler = new UserHandler(fieldsToPrint);
+            xmlReader.setContentHandler(userHandler);
+
+            // Parse the XML file
+            xmlReader.parse("records.xml");
+
+            // Get the JSON array from the handler and print it
+            JSONArray jsonArray = userHandler.getJsonArray();
             System.out.println(jsonArray.toString(4)); // Pretty print with an indentation of 4 spaces
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+}
+
+class UserHandler extends DefaultHandler {
+    private Set<String> fieldsToPrint;
+    private JSONArray jsonArray = new JSONArray();
+    private JSONObject currentRecord;
+    private StringBuilder currentValue;
+    private boolean isValidElement;
+
+    public UserHandler(Set<String> fieldsToPrint) {
+        this.fieldsToPrint = fieldsToPrint;
+    }
+
+    public JSONArray getJsonArray() {
+        return jsonArray;
+    }
+
+    @Override
+    public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+        if (qName.equalsIgnoreCase("record")) {
+            currentRecord = new JSONObject();
+        } else if (fieldsToPrint.contains(qName)) {
+            currentValue = new StringBuilder();
+            isValidElement = true;
+        } else {
+            isValidElement = false;
+        }
+    }
+
+    @Override
+    public void characters(char[] ch, int start, int length) throws SAXException {
+        if (isValidElement) {
+            currentValue.append(ch, start, length);
+        }
+    }
+
+    @Override
+    public void endElement(String uri, String localName, String qName) throws SAXException {
+        if (qName.equalsIgnoreCase("record")) {
+            jsonArray.put(currentRecord);
+        } else if (fieldsToPrint.contains(qName)) {
+            if (currentValue.length() > 0) {
+                currentRecord.put(qName, currentValue.toString());
+            } else {
+                currentRecord.put(qName, "Field not found in XML");
+            }
         }
     }
 }
